@@ -1,25 +1,5 @@
 """
 Step 1 - generate the four single-transistor datasets with ngspice.
-
-For each case (NMOS ON/OFF, PMOS ON/OFF) draw N_SAMPLES uniform random points
-(Section 4 of the assignment) plus N_EDGE points at the edges of the Vd/Vs/W range
-(see draw_edge_samples), run a DC operating point for each, and store inputs +
-terminal currents in data/<case>.csv. Rows 0..N_SAMPLES-1 are the uniform samples.
-
-Sign convention: every current is the current flowing INTO the device terminal
-(= -i(Vsource) in SPICE), so id + ig + is + ib = 0 by Kirchhoff.
-
-Gate current: 22nm_HP.pm has rgatemod=1, i.e. a ~1 ohm resistor inside the gate.
-The current through Vg is then found by subtracting two O(1 A) terms, so i(Vg) is
-only resolved to ~2e-16 A (double-precision roundoff). PMOS-OFF gate leakage is
-below that, so with IG_FROM_DEVICE=True (config.py) `ig` is taken from the BSIM4
-operating-point outputs (igs+igd+igcs+igcd+igb), which is the same current
-without the roundoff. The script checks the two agree wherever i(Vg) is clean.
-
-Speed: instead of 40,000 ngspice launches, each deck holds one transistor and a
-.control block that re-biases it (alter), re-draws its process parameters
-(altermod) and temperature (option temp), and re-runs .op for CHUNK samples.
-This was checked to give bit-identical results to a fresh deck per sample.
 """
 import re, subprocess, sys, tempfile
 from pathlib import Path
@@ -47,12 +27,7 @@ def draw_samples(case, n, rng):
 
 
 def draw_edge_samples(case, n, rng):
-    """Extra samples at the edges of the range, where transistors inside gates operate.
-    VDD, temperature and process parameters are drawn as in draw_samples(). Vd and Vs are
-    each drawn from a mixture: exactly 0 (25 %), exactly VDD (25 %), within EDGE_BAND of 0
-    (10 %), within EDGE_BAND of VDD (10 %), uniform 0..VDD (30 %); pairs where both came
-    out 'uniform' are redrawn, so at least one of Vd, Vs is at or near a rail.
-    W is uniform (70 %), exactly 1 x Lmin (15 %) or exactly 8 x Lmin (15 %)."""
+    """Extra samples at the edges of the range, where transistors inside gates operate."""
     dev, kg, kb = CASES[case]
     vdd  = rng.uniform(VDD_NOM * (1 - VDD_TOL), VDD_NOM * (1 + VDD_TOL), n)
     temp = rng.uniform(*T_RANGE, n)
@@ -79,7 +54,7 @@ def draw_edge_samples(case, n, rng):
 
 
 def deck(case, rows, title=None):
-    """Build one ngspice deck that simulates all `rows` one after another."""
+    """Build one ngspice deck that simulates all rows one after another."""
     dev = CASES[case][0]
     r0 = rows.iloc[0]
     L = [f"* {title or case}: single {dev.upper()}, every terminal on its own source",
