@@ -1,5 +1,0 @@
-case,n,max_abs_sum_A,median_abs_sum_A,max_sum_over_largest_current,median_sum_over_largest_current
-nmos_on,15000,1.018e-14,1.166e-16,9.938e-11,8.708e-12
-nmos_off,15000,9.333e-18,3.630e-22,9.150e-11,8.618e-12
-pmos_on,15000,1.028e-14,7.754e-17,1.114e-02,1.676e-11
-pmos_off,15000,1.789e-16,2.776e-17,1.000e+00,3.920e-05
